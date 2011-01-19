@@ -1,0 +1,121 @@
+#!/bin/sh
+#
+# start, stop, or query ipmi system monitoring tools
+#
+# chkconfig:	345 11 89
+#
+# description: start, stop, or query ipmi system monitoring tools
+#
+# Handles both 2.4 and 2.6 configurations.
+# Requires an /etc/sysconfig/ipmi file to function, see below.
+#
+# $Id$
+
+# Source function library
+. /etc/rc.d/init.d/functions
+
+IPMI="no"
+# Get service config - may override defaults
+[ -f /etc/sysconfig/ipmi ] && . /etc/sysconfig/ipmi
+
+# Exit silently if IPMI is not enabled.
+if ! is_yes "$IPMI"; then
+	exit 0
+fi
+
+start() {
+	# Check if the service is already running?
+	if [ -f /var/lock/subsys/ipmi ]; then
+		msg_already_running "IPMI"
+		return
+	fi
+
+	msg_starting "IPMI"
+
+	# If ipmidev isn't listed in /proc/devices,
+	# try loading the modules.
+	if ! grep -q ipmidev /proc/devices; then
+	    /sbin/modprobe ipmi_msghandler || RETVAL=1
+	    /sbin/modprobe ipmi_devintf || RETVAL=1
+	    # Try loading new driver module, fall back to old
+	    # module if that fails.
+	    if ! /sbin/modprobe ipmi_si >/dev/null 2>&1; then
+			/sbin/modprobe ipmi_si_drv || RETVAL=1
+	    fi
+	fi
+
+	# If ipmidev still isn't listed in /proc/devices after we load
+	# modules, this just isn't going to work.  Set RETVAL to mark
+	# this failure.
+	grep -q ipmidev /proc/devices || RETVAL=1
+
+	# remove old device file always
+	# in case ipmi gets assigned new dynamic major number from kernel
+	if [ -c /dev/ipmi0 ]; then
+	    rm -f /dev/ipmi0
+	fi
+
+	# Check if the device file exists and create if not.
+	if [ ! -c /dev/ipmi0 ] && [ $RETVAL -eq 0 ]; then
+	    major=$(awk '/ ipmidev$/{print $1}' /proc/devices)
+	    /bin/mknod -m 0600 /dev/ipmi0 c $major 0 || RETVAL=1
+	fi
+
+	if [ $RETVAL -eq 0 ]; then
+	   	touch /var/lock/subsys/ipmi
+		ok
+	else
+		fail
+	fi
+}
+
+stop() {
+	if [ ! -f /var/lock/subsys/ipmi ]; then
+		msg_not_running "IPMI"
+		return
+	fi
+
+	# Stop doesn't actually do anything because we currently don't
+	# unload ipmi modules on stop.
+	# That might change in the future if we decide unloading the ipmi modules
+	# is safe.
+	msg_stopping "IPMI"; ok
+	rm -f /var/lock/subsys/ipmi
+}
+
+condrestart() {
+	if [ ! -f /var/lock/subsys/ipmi ]; then
+		msg_not_running "IPMI"
+		RETVAL=$1
+		return
+	fi
+
+	stop
+	start
+}
+
+RETVAL=0
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	stop
+	start
+	;;
+  try-restart)
+	condrestart 0
+	;;
+  force-reload)
+	condrestart 7
+	;;
+  *)
+	msg_usage "$0 {start|stop|restart|try-restart|force-reload}"
+	exit 3
+esac
+
+exit $RETVAL
