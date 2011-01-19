@@ -1,0 +1,8 @@
+## Path:        Hardware/IPMI
+## Description: Enable standard hardware interfaces (KCS, BT, SMIC)
+## Type:        yesno
+## Default:     "yes"
+## Config:      ipmi
+# Enable standard hardware interfaces (KCS, BT, SMIC)
+# You probably want this enabled.
+IPMI=yes
