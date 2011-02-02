@@ -1,7 +1,7 @@
 Summary:	Script to load automatically IPMI kernel drivers
 Name:		ipmi-init
 Version:	0.1
-Release:	1
+Release:	2
 License:	BSD
 Group:		Applications/System
 Source0:	ipmi.init
@@ -24,7 +24,7 @@ drivers on boot and adjusts /dev notes accordingly if needed.
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT/etc/{rc.d/init.d,sysconfig}
 install -p %{SOURCE0} $RPM_BUILD_ROOT/etc/rc.d/init.d/ipmi
-cp -a %{SOURCE0} $RPM_BUILD_ROOT/etc/sysconfig/ipmi
+cp -a %{SOURCE1} $RPM_BUILD_ROOT/etc/sysconfig/ipmi
 
 %clean
 rm -rf $RPM_BUILD_ROOT
