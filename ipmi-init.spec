@@ -1,7 +1,7 @@
 Summary:	Script to load automatically IPMI kernel drivers
 Name:		ipmi-init
 Version:	0.1
-Release:	2
+Release:	3
 License:	BSD
 Group:		Applications/System
 Source0:	ipmi.init

@@ -79,7 +79,6 @@ stop() {
 	# unload ipmi modules on stop.
 	# That might change in the future if we decide unloading the ipmi modules
 	# is safe.
-	msg_stopping "IPMI"; ok
 	rm -f /var/lock/subsys/ipmi
 }
 
